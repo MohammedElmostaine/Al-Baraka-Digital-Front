@@ -1,0 +1,115 @@
+<div class="dashboard-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        Validation des Opérations
+      </h1>
+      <p class="page-subtitle">Opérations en attente de validation</p>
+    </div>
+    <div class="header-actions">
+      <div class="pending-badge">
+        <span class="count">{{ pendingCount() }}</span>
+        <span class="label">en attente</span>
+      </div>
+      <button class="btn btn-outline" (click)="refresh()">
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Info Alert -->
+  <div class="alert alert-info">
+    <div>
+      <strong>Workflow intelligent</strong>
+      <p>Les opérations sont classées par ordre de création. Consultez les détails avant de valider.</p>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement des opérations...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-error">
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- Operations List -->
+  <div *ngIf="!loading() && !error()" class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        Opérations à valider
+      </h3>
+    </div>
+    <div class="card-body">
+      <!-- Empty State -->
+      <div *ngIf="operations().length === 0" class="empty-state">
+        <div class="empty-icon"></div>
+        <h4>Aucune opération en attente</h4>
+        <p>Toutes les opérations ont été traitées</p>
+        <button class="btn btn-outline" (click)="refresh()">
+          Actualiser
+        </button>
+      </div>
+
+      <!-- Operations Table -->
+      <div *ngIf="operations().length > 0" class="table-responsive">
+        <table class="operations-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Client</th>
+              <th>Type</th>
+              <th>Montant</th>
+              <th>Date</th>
+              <th>Document</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let operation of operations()" class="table-row">
+              <td>#{{ operation.id }}</td>
+              <td>{{ operation.sourceAccountNumber }}</td>
+              <td>
+                <span [class]="'badge ' + getTypeBadgeClass(operation.type)">
+                  {{ getTypeLabel(operation.type) }}
+                </span>
+              </td>
+              <td>{{ operation.amount | number:'1.2-2' }} DH</td>
+              <td>{{ operation.createdAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>
+                <span [class]="'document-status ' + getDocumentIconClass(operation)">
+                  {{ getDocumentIcon(operation) }}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-sm btn-primary" [routerLink]="['/agent/operation', operation.id]">
+                  Examiner
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Footer -->
+  <div *ngIf="!loading() && operations().length > 0" class="stats-footer">
+    <div class="stat-item">
+      <span class="stat-label">Total en attente</span>
+      <span class="stat-value">{{ pendingCount() }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Avec document</span>
+      <span class="stat-value">{{ operationsWithDocument().length }}</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-label">Sans document</span>
+      <span class="stat-value">{{ operationsWithoutDocument().length }}</span>
+    </div>
+  </div>
+</div>

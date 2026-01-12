@@ -1,0 +1,288 @@
+<!-- src/app/features/agent/operation-validation/operation-validation.component.html -->
+<div class="validation-container">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/agent/dashboard">Dashboard</a>
+    <span class="separator">›</span>
+    <span class="current">Validation #{{ operation()?.id }}</span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <span class="icon">🛡️</span>
+        Validation Opération #{{ operation()?.id }}
+      </h1>
+      <p class="page-subtitle">Examinez et validez cette opération</p>
+    </div>
+    <button class="btn btn-outline" (click)="goBack()">
+      <span class="icon">←</span>
+      Retour
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-error">
+    <span class="icon">⚠️</span>
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading() && !error() && operation()" class="content-grid">
+    <!-- Main Column -->
+    <div class="main-column">
+      <!-- Operation Details Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">ℹ️</span>
+            Détails de l'opération
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Type</label>
+              <div class="value">
+                <span [class]="'badge ' + getTypeBadgeClass(operation()!.type)">
+                  {{ getTypeLabel(operation()!.type) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <label>Montant</label>
+              <div class="value amount">
+                {{ operation()!.amount | number:'1.2-2' }} DH
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <label>Compte source</label>
+              <div class="value">{{ operation()!.sourceAccountNumber }}</div>
+            </div>
+
+            <div *ngIf="operation()!.destinationAccountNumber" class="detail-item">
+              <label>Compte destinataire</label>
+              <div class="value">{{ operation()!.destinationAccountNumber }}</div>
+            </div>
+
+            <div class="detail-item">
+              <label>Date de création</label>
+              <div class="value">
+                {{ operation()!.createdAt | date:'dd/MM/yyyy HH:mm' }}
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <label>Document</label>
+              <div class="value">
+                <span *ngIf="operation()!.hasDocument" class="status-success">
+                  <span class="icon">✓</span> Document fourni
+                </span>
+                <span *ngIf="!operation()!.hasDocument" class="status-error">
+                  <span class="icon">✗</span> Aucun document
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Viewer Card -->
+      <div *ngIf="operation()!.hasDocument" class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">📎</span>
+            Document justificatif
+          </h3>
+        </div>
+        <div class="card-body document-viewer">
+          <div class="document-actions">
+            <a
+              [href]="documentUrl()"
+              target="_blank"
+              class="btn btn-primary"
+            >
+              <span class="icon">👁️</span>
+              Visualiser le document
+            </a>
+            <a
+              [href]="documentUrl()"
+              download
+              class="btn btn-outline"
+            >
+              <span class="icon">⬇️</span>
+              Télécharger
+            </a>
+          </div>
+          <p class="document-help">
+            Ouvrez le document dans un nouvel onglet pour vérifier son authenticité.
+          </p>
+        </div>
+      </div>
+
+      <!-- Decision Card -->
+      <div class="card decision-card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">⚖️</span>
+            Décision finale
+          </h3>
+        </div>
+        <div class="card-body">
+          <p class="decision-help">
+            En tant qu'agent bancaire, vous avez le dernier mot sur cette opération.
+            Vérifiez attentivement tous les détails avant de valider.
+          </p>
+
+          <!-- Comment Form -->
+          <div *ngIf="showCommentForm()" class="comment-section">
+            <form [formGroup]="commentForm">
+              <div class="form-group">
+                <label for="comment">Commentaire (optionnel)</label>
+                <textarea
+                  id="comment"
+                  formControlName="comment"
+                  class="form-control"
+                  rows="3"
+                  placeholder="Ajoutez un commentaire sur votre décision..."
+                ></textarea>
+              </div>
+            </form>
+
+            <div class="comment-actions">
+              <button
+                *ngIf="actionType() === 'approve'"
+                class="btn btn-success"
+                (click)="approveOperation()"
+                [disabled]="processing()"
+              >
+                <span *ngIf="!processing()">
+                  <span class="icon">✓</span>
+                  Confirmer l'approbation
+                </span>
+                <span *ngIf="processing()" class="loading">
+                  <span class="spinner"></span>
+                  Traitement...
+                </span>
+              </button>
+
+              <button
+                *ngIf="actionType() === 'reject'"
+                class="btn btn-danger"
+                (click)="rejectOperation()"
+                [disabled]="processing()"
+              >
+                <span *ngIf="!processing()">
+                  <span class="icon">✗</span>
+                  Confirmer le rejet
+                </span>
+                <span *ngIf="processing()" class="loading">
+                  <span class="spinner"></span>
+                  Traitement...
+                </span>
+              </button>
+
+              <button
+                class="btn btn-outline"
+                (click)="cancelComment()"
+                [disabled]="processing()"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div *ngIf="!showCommentForm()" class="action-buttons">
+            <button
+              class="btn btn-success btn-lg"
+              (click)="showComment('approve')"
+            >
+              <span class="icon">✓</span>
+              Approuver l'opération
+            </button>
+            <button
+              class="btn btn-danger btn-lg"
+              (click)="showComment('reject')"
+            >
+              <span class="icon">✗</span>
+              Rejeter l'opération
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Validation Guide -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">💡</span>
+            Guide de validation
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="guide-section">
+            <h4>✅ À vérifier :</h4>
+            <ul>
+              <li>Document clair et lisible</li>
+              <li>Montant cohérent avec le justificatif</li>
+              <li>Informations complètes</li>
+              <li>Pas de signe de fraude</li>
+            </ul>
+          </div>
+
+          <div class="guide-section">
+            <h4>⚠️ Signes d'alerte :</h4>
+            <ul>
+              <li>Document de mauvaise qualité</li>
+              <li>Informations incohérentes</li>
+              <li>Montants suspects</li>
+              <li>Document modifié</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">📊</span>
+            Vos statistiques
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="stat-item">
+            <label>Validées aujourd'hui</label>
+            <div class="stat-value">0</div>
+          </div>
+          <div class="stat-item">
+            <label>Taux d'approbation</label>
+            <div class="stat-value">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Help Card -->
+      <div class="card">
+        <div class="card-body help-section">
+          <span class="help-icon">❓</span>
+          <h4>Besoin d'aide ?</h4>
+          <p>En cas de doute, contactez votre superviseur avant de valider.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

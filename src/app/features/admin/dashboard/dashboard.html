@@ -1,0 +1,236 @@
+<!-- src/app/features/admin/dashboard/dashboard.component.html -->
+<div class="dashboard-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        Dashboard Administrateur
+      </h1>
+      <p class="page-subtitle">Vue d'ensemble du système</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" routerLink="/admin/users">
+        Gérer les utilisateurs
+      </button>
+      <button class="btn btn-outline" (click)="refresh()">
+        Actualiser
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement des statistiques...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-error">
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading() && !error()" class="dashboard-content">
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card stat-primary">
+        <div class="stat-content">
+          <div class="stat-label">Total utilisateurs</div>
+          <div class="stat-value">{{ totalUsers() }}</div>
+          <div class="stat-description">Tous les comptes</div>
+        </div>
+        <div class="stat-icon"></div>
+      </div>
+
+      <div class="stat-card stat-success">
+        <div class="stat-content">
+          <div class="stat-label">Actifs</div>
+          <div class="stat-value">{{ activeUsers() }}</div>
+          <div class="stat-description">Comptes actifs</div>
+        </div>
+        <div class="stat-icon"></div>
+      </div>
+
+      <div class="stat-card stat-warning">
+        <div class="stat-content">
+          <div class="stat-label">Inactifs</div>
+          <div class="stat-value">{{ inactiveUsers() }}</div>
+          <div class="stat-description">Comptes désactivés</div>
+        </div>
+        <div class="stat-icon"></div>
+      </div>
+
+      <div class="stat-card stat-info">
+        <div class="stat-content">
+          <div class="stat-label">Taux d'activation</div>
+          <div class="stat-value">
+            {{ totalUsers() > 0 ? ((activeUsers() / totalUsers()) * 100).toFixed(0) : 0 }}%
+          </div>
+          <div class="stat-description">Utilisateurs actifs</div>
+        </div>
+        <div class="stat-icon"></div>
+      </div>
+    </div>
+
+    <!-- Users by Role -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          Répartition par rôle
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="role-stats">
+          <div class="role-stat-item">
+            <div class="role-icon"></div>
+            <div class="role-info">
+              <div class="role-name">Clients</div>
+              <div class="role-count">{{ clientsCount() }}</div>
+              <div class="role-percentage">
+                {{ totalUsers() > 0 ? ((clientsCount() / totalUsers()) * 100).toFixed(0) : 0 }}%
+              </div>
+            </div>
+            <div class="role-bar">
+              <div class="role-progress" [style.width.%]="totalUsers() > 0 ? (clientsCount() / totalUsers()) * 100 : 0"
+                style="background-color: #667eea;">
+              </div>
+            </div>
+          </div>
+
+          <div class="role-stat-item">
+            <div class="role-icon"></div>
+            <div class="role-info">
+              <div class="role-name">Agents</div>
+              <div class="role-count">{{ agentsCount() }}</div>
+              <div class="role-percentage">
+                {{ totalUsers() > 0 ? ((agentsCount() / totalUsers()) * 100).toFixed(0) : 0 }}%
+              </div>
+            </div>
+            <div class="role-bar">
+              <div class="role-progress" [style.width.%]="totalUsers() > 0 ? (agentsCount() / totalUsers()) * 100 : 0"
+                style="background-color: #f39c12;">
+              </div>
+            </div>
+          </div>
+
+          <div class="role-stat-item">
+            <div class="role-icon"></div>
+            <div class="role-info">
+              <div class="role-name">Admins</div>
+              <div class="role-count">{{ adminsCount() }}</div>
+              <div class="role-percentage">
+                {{ totalUsers() > 0 ? ((adminsCount() / totalUsers()) * 100).toFixed(0) : 0 }}%
+              </div>
+            </div>
+            <div class="role-bar">
+              <div class="role-progress" [style.width.%]="totalUsers() > 0 ? (adminsCount() / totalUsers()) * 100 : 0"
+                style="background-color: #e74c3c;">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Users -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          Utilisateurs récents
+        </h3>
+      </div>
+      <div class="card-body">
+        <div *ngIf="users().length === 0" class="empty-state">
+          <div class="empty-icon"></div>
+          <h4>Aucun utilisateur</h4>
+          <p>Aucun utilisateur n'a été créé</p>
+        </div>
+
+        <div *ngIf="users().length > 0" class="table-responsive">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Utilisateur</th>
+                <th>Email</th>
+                <th>Rôle</th>
+                <th>Statut</th>
+                <th>Date création</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of users().slice(0, 10)" class="table-row">
+                <td class="cell-id">#{{ user.id }}</td>
+                <td class="cell-user">
+                  <div class="user-info">
+                    <div class="user-avatar">
+                      <span class="icon">{{ getRoleIcon(user.role) }}</span>
+                    </div>
+                    <div class="user-name">{{ user.fullName }}</div>
+                  </div>
+                </td>
+                <td class="cell-email">{{ user.email }}</td>
+                <td>
+                  <span [class]="'badge ' + getRoleBadgeClass(user.role)">
+                    {{ getRoleLabel(user.role) }}
+                  </span>
+                </td>
+                <td>
+                  <span [class]="user.active ? 'status-active' : 'status-inactive'">
+                    <span class="status-dot"></span>
+                    {{ user.active ? 'Actif' : 'Inactif' }}
+                  </span>
+                </td>
+                <td class="cell-date">
+                  {{ user.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div *ngIf="users().length > 10" class="table-footer">
+          <button class="btn btn-outline" routerLink="/admin/users">
+            Voir tous les utilisateurs ({{ totalUsers() }})
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          Actions rapides
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="quick-actions">
+          <button class="action-card" routerLink="/admin/user-management">
+            <div class="action-icon"></div>
+            <div class="action-title">Gérer les utilisateurs</div>
+            <div class="action-description">Créer, modifier, supprimer</div>
+          </button>
+
+          <button class="action-card" (click)="refresh()">
+            <div class="action-icon"></div>
+            <div class="action-title">Rapports détaillés</div>
+            <div class="action-description">Statistiques avancées</div>
+          </button>
+
+          <button class="action-card">
+            <div class="action-icon"></div>
+            <div class="action-title">Paramètres système</div>
+            <div class="action-description">Configuration générale</div>
+          </button>
+
+          <button class="action-card">
+            <div class="action-icon"></div>
+            <div class="action-title">Sécurité</div>
+            <div class="action-description">Logs et audits</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

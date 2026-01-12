@@ -1,0 +1,295 @@
+<!-- src/app/features/admin/user-management/user-management.component.html -->
+<div class="management-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <span class="icon">👥</span>
+        Gestion des Utilisateurs
+      </h1>
+      <p class="page-subtitle">Créer, modifier et gérer les utilisateurs</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <span class="icon">➕</span>
+        Nouvel utilisateur
+      </button>
+      <button class="btn btn-outline" routerLink="/admin/dashboard">
+        <span class="icon">←</span>
+        Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="filters-section">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input
+        type="text"
+        placeholder="Rechercher par nom ou email..."
+        (input)="onSearch($event)"
+        class="search-input"
+      />
+    </div>
+
+    <div class="filters">
+      <div class="filter-group">
+        <label>Rôle:</label>
+        <div class="filter-buttons">
+          <button
+            [class.active]="filterRole() === 'ALL'"
+            (click)="setRoleFilter('ALL')"
+            class="filter-btn"
+          >
+            Tous
+          </button>
+          <button
+            *ngFor="let role of roles"
+            [class.active]="filterRole() === role"
+            (click)="setRoleFilter(role)"
+            class="filter-btn"
+          >
+            {{ getRoleLabel(role) }}
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Statut:</label>
+        <div class="filter-buttons">
+          <button
+            [class.active]="filterStatus() === 'ALL'"
+            (click)="setStatusFilter('ALL')"
+            class="filter-btn"
+          >
+            Tous
+          </button>
+          <button
+            [class.active]="filterStatus() === 'ACTIVE'"
+            (click)="setStatusFilter('ACTIVE')"
+            class="filter-btn"
+          >
+            Actifs
+          </button>
+          <button
+            [class.active]="filterStatus() === 'INACTIVE'"
+            (click)="setStatusFilter('INACTIVE')"
+            class="filter-btn"
+          >
+            Inactifs
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-stats">
+      <span class="stat-badge">Total: {{ totalUsers() }}</span>
+      <span class="stat-badge success">Actifs: {{ activeCount() }}</span>
+      <span class="stat-badge danger">Inactifs: {{ inactiveCount() }}</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement des utilisateurs...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-error">
+    <span class="icon">⚠️</span>
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- Users Table -->
+  <div *ngIf="!loading() && !error()" class="card">
+    <div class="card-body">
+      <div *ngIf="filteredUsers().length === 0" class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <h4>Aucun utilisateur trouvé</h4>
+        <p>Essayez de modifier vos filtres de recherche</p>
+      </div>
+
+      <div *ngIf="filteredUsers().length > 0" class="table-responsive">
+        <table class="users-table">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Utilisateur</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Statut</th>
+            <th>Date création</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let user of filteredUsers()" class="table-row">
+            <td class="cell-id">#{{ user.id }}</td>
+            <td class="cell-user">
+              <div class="user-info">
+                <div class="user-avatar">
+                    <span class="icon">
+                      {{ user.role === Role.CLIENT ? '👤' :
+                         user.role === Role.AGENT_BANCAIRE ? '🛡️' : '👑' }}
+                    </span>
+                </div>
+                <div>
+                  <div class="user-name">{{ user.fullName }}</div>
+                  <div class="user-accounts" *ngIf="user.accountNumbers && user.accountNumbers.length > 0">
+                    {{ user.accountNumbers[0] }}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="cell-email">{{ user.email }}</td>
+            <td>
+                <span [class]="'badge ' + getRoleBadgeClass(user.role)">
+                  {{ getRoleLabel(user.role) }}
+                </span>
+            </td>
+            <td>
+              <button
+                class="status-toggle"
+                [class.active]="user.active"
+                (click)="toggleStatus(user)"
+              >
+                <span class="status-dot"></span>
+                {{ user.active ? 'Actif' : 'Inactif' }}
+              </button>
+            </td>
+            <td class="cell-date">
+              {{ user.createdAt | date:'dd/MM/yyyy HH:mm' }}
+            </td>
+            <td class="cell-actions">
+              <div class="action-buttons">
+                <button
+                  class="btn-icon btn-edit"
+                  (click)="openEditModal(user)"
+                  title="Modifier"
+                >
+                  ✏️
+                </button>
+                <button
+                  class="btn-icon btn-delete"
+                  (click)="deleteUser(user)"
+                  title="Supprimer"
+                >
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div *ngIf="showModal()" class="modal-overlay" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">
+        {{ modalMode() === 'create' ? '➕ Nouvel utilisateur' : '✏️ Modifier l\'utilisateur' }}
+      </h2>
+      <button class="modal-close" (click)="closeModal()">✕</button>
+    </div>
+
+    <form [formGroup]="userForm" (ngSubmit)="saveUser()" class="modal-body">
+      <div class="form-group">
+        <label for="fullName">Nom complet *</label>
+        <input
+          type="text"
+          id="fullName"
+          formControlName="fullName"
+          class="form-control"
+          placeholder="Jean Dupont"
+        />
+        <div *ngIf="userForm.get('fullName')?.touched && userForm.get('fullName')?.errors" class="error-message">
+          <span *ngIf="userForm.get('fullName')?.errors?.['required']">Le nom est requis</span>
+          <span *ngIf="userForm.get('fullName')?.errors?.['minlength']">Minimum 3 caractères</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input
+          type="email"
+          id="email"
+          formControlName="email"
+          class="form-control"
+          placeholder="email@exemple.com"
+          [readonly]="modalMode() === 'edit'"
+        />
+        <div *ngIf="userForm.get('email')?.touched && userForm.get('email')?.errors" class="error-message">
+          <span *ngIf="userForm.get('email')?.errors?.['required']">L'email est requis</span>
+          <span *ngIf="userForm.get('email')?.errors?.['email']">Email invalide</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">
+          Mot de passe {{ modalMode() === 'edit' ? '(laisser vide pour ne pas changer)' : '*' }}
+        </label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          class="form-control"
+          placeholder="••••••••"
+        />
+        <div *ngIf="userForm.get('password')?.touched && userForm.get('password')?.errors" class="error-message">
+          <span *ngIf="userForm.get('password')?.errors?.['required']">Le mot de passe est requis</span>
+          <span *ngIf="userForm.get('password')?.errors?.['minlength']">Minimum 6 caractères</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="role">Rôle *</label>
+        <select id="role" formControlName="role" class="form-control">
+          <option *ngFor="let role of roles" [value]="role">
+            {{ getRoleLabel(role) }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input
+            type="checkbox"
+            formControlName="active"
+            class="checkbox-input"
+          />
+          <span>Compte actif</span>
+        </label>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="processing() || userForm.invalid"
+        >
+          <span *ngIf="!processing()">
+            {{ modalMode() === 'create' ? 'Créer' : 'Mettre à jour' }}
+          </span>
+          <span *ngIf="processing()" class="loading">
+            <span class="spinner"></span>
+            Traitement...
+          </span>
+        </button>
+        <button
+          type="button"
+          class="btn btn-outline"
+          (click)="closeModal()"
+          [disabled]="processing()"
+        >
+          Annuler
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
