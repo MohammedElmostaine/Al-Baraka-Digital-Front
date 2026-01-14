@@ -1,0 +1,191 @@
+<!-- src/app/features/auth/components/register/register.component.html -->
+<div class="auth-container">
+  <div class="auth-card">
+    <!-- Header -->
+    <div class="auth-header">
+      <div class="logo">
+        <i class="icon-bank"></i>
+      </div>
+      <h2>Créer un compte</h2>
+      <p>Rejoignez Al Baraka Digital</p>
+    </div>
+
+    <!-- Alert d'erreur -->
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <i class="icon-alert"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Alert de succès -->
+    <div class="alert alert-success" *ngIf="successMessage">
+      <i class="icon-success"></i>
+      <span>{{ successMessage }}</span>
+    </div>
+
+    <!-- Formulaire d'inscription -->
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <!-- Nom complet -->
+      <div class="form-group">
+        <label for="fullName">Nom complet</label>
+        <div class="input-group" [class.error]="submitted && f['fullName'].errors">
+          <span class="input-icon">
+            <i class="icon-user"></i>
+          </span>
+          <input
+            type="text"
+            id="fullName"
+            formControlName="fullName"
+            placeholder="Jean Dupont"
+            [class.invalid]="submitted && f['fullName'].errors"
+            autocomplete="name"
+          />
+        </div>
+        <div class="error-message" *ngIf="submitted && f['fullName'].errors">
+          <span *ngIf="f['fullName'].errors['required']">Le nom complet est requis</span>
+          <span *ngIf="f['fullName'].errors['minlength']">
+            Le nom doit contenir au moins 3 caractères
+          </span>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <div class="input-group" [class.error]="submitted && f['email'].errors">
+          <span class="input-icon">
+            <i class="icon-email"></i>
+          </span>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="votre.email@exemple.com"
+            [class.invalid]="submitted && f['email'].errors"
+            autocomplete="email"
+          />
+        </div>
+        <div class="error-message" *ngIf="submitted && f['email'].errors">
+          <span *ngIf="f['email'].errors['required']">L'email est requis</span>
+          <span *ngIf="f['email'].errors['email']">Email invalide</span>
+        </div>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <div class="input-group" [class.error]="submitted && f['password'].errors">
+          <span class="input-icon">
+            <i class="icon-lock"></i>
+          </span>
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            placeholder="••••••••"
+            [class.invalid]="submitted && f['password'].errors"
+            autocomplete="new-password"
+          />
+          <button
+            type="button"
+            class="input-action"
+            (click)="togglePasswordVisibility()"
+            tabindex="-1"
+          >
+            <i [class]="showPassword ? 'icon-eye-off' : 'icon-eye'"></i>
+          </button>
+        </div>
+        <div class="error-message" *ngIf="submitted && f['password'].errors">
+          <span *ngIf="f['password'].errors['required']">Le mot de passe est requis</span>
+          <span *ngIf="f['password'].errors['minlength']">
+            Le mot de passe doit contenir au moins 6 caractères
+          </span>
+        </div>
+      </div>
+
+      <!-- Confirmation mot de passe -->
+      <div class="form-group">
+        <label for="confirmPassword">Confirmer le mot de passe</label>
+        <div class="input-group" [class.error]="submitted && (f['confirmPassword'].errors || registerForm.errors?.['passwordMismatch'])">
+          <span class="input-icon">
+            <i class="icon-lock"></i>
+          </span>
+          <input
+            [type]="showConfirmPassword ? 'text' : 'password'"
+            id="confirmPassword"
+            formControlName="confirmPassword"
+            placeholder="••••••••"
+            [class.invalid]="submitted && (f['confirmPassword'].errors || registerForm.errors?.['passwordMismatch'])"
+            autocomplete="new-password"
+          />
+          <button
+            type="button"
+            class="input-action"
+            (click)="toggleConfirmPasswordVisibility()"
+            tabindex="-1"
+          >
+            <i [class]="showConfirmPassword ? 'icon-eye-off' : 'icon-eye'"></i>
+          </button>
+        </div>
+        <div class="error-message" *ngIf="submitted && f['confirmPassword'].errors">
+          <span *ngIf="f['confirmPassword'].errors['required']">
+            La confirmation du mot de passe est requise
+          </span>
+        </div>
+        <div class="error-message" *ngIf="submitted && registerForm.errors?.['passwordMismatch'] && !f['confirmPassword'].errors">
+          <span>Les mots de passe ne correspondent pas</span>
+        </div>
+      </div>
+
+      <!-- Info sécurité -->
+      <div class="info-box">
+        <i class="icon-shield"></i>
+        <div>
+          <strong>Sécurité renforcée</strong>
+          <p>Votre mot de passe sera chiffré et sécurisé</p>
+        </div>
+      </div>
+
+      <!-- Bouton d'inscription -->
+      <button
+        type="submit"
+        class="btn btn-primary btn-block"
+        [disabled]="loading"
+      >
+        <span *ngIf="!loading">
+          <i class="icon-register"></i>
+          Créer mon compte
+        </span>
+        <span *ngIf="loading" class="loading">
+          <i class="spinner"></i>
+          Création en cours...
+        </span>
+      </button>
+    </form>
+
+    <!-- Séparateur -->
+    <div class="divider">
+      <span>OU</span>
+    </div>
+
+    <!-- Lien connexion -->
+    <div class="text-center">
+      <p class="text-muted">Vous avez déjà un compte ?</p>
+      <button type="button" class="btn btn-outline" (click)="goToLogin()">
+        Se connecter
+      </button>
+    </div>
+
+    <!-- Note -->
+    <div class="note">
+      <p>
+        En créant un compte, vous acceptez nos conditions d'utilisation
+        et notre politique de confidentialité.
+      </p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="auth-footer">
+    <small>© 2026 Al Baraka Digital - Version 3.0 Angular</small>
+  </div>
+</div>

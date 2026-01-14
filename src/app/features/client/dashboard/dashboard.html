@@ -1,0 +1,154 @@
+<!-- src/app/features/client/dashboard/dashboard.component.html -->
+<div class="dashboard-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        Mon Dashboard
+      </h1>
+      <p class="page-subtitle" *ngIf="account()">
+        Bienvenue, <strong>{{ account()!.ownerFullName }}</strong>
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" routerLink="/client/new-operation">
+        Nouvelle Opération
+      </button>
+
+      <button class="btn btn-outline" (click)="refresh()">
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement des données...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-error">
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div *ngIf="!loading() && !error()" class="dashboard-content">
+    <!-- Account Info Card -->
+    <div class="card account-card">
+      <div class="card-body">
+        <div class="account-info">
+          <div class="account-details">
+            <h3 class="card-title">
+              Informations du compte
+            </h3>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Numéro de compte</label>
+                <div class="value">{{ account()?.accountNumber }}</div>
+              </div>
+              <div class="info-item">
+                <label>Titulaire</label>
+                <div class="value">{{ account()?.ownerFullName }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="account-balance">
+            <label>Solde actuel</label>
+            <div class="balance-amount">
+              {{ account()?.balance | number:'1.2-2' }} DH
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <div class="stat-card stat-primary">
+        <div class="stat-content">
+          <div class="stat-value">{{ totalOperations() }}</div>
+          <div class="stat-label">Total opérations</div>
+        </div>
+        <div class="stat-icon"></div>
+      </div>
+
+      <div class="stat-card stat-warning">
+        <div class="stat-content">
+          <div class="stat-value">{{ pendingCount() }}</div>
+          <div class="stat-label">En attente</div>
+        </div>
+        <div class="stat-icon"></div>
+      </div>
+
+      <div class="stat-card stat-success">
+        <div class="stat-content">
+          <div class="stat-value">{{ completedCount() }}</div>
+          <div class="stat-label">Complétées</div>
+        </div>
+        <div class="stat-icon"></div>
+      </div>
+    </div>
+
+    <!-- Recent Operations -->
+    <div class="card operations-card">
+      <div class="card-header">
+        <h3 class="card-title">
+          Opérations récentes
+        </h3>
+      </div>
+      <div class="card-body">
+        <!-- Empty State -->
+        <div *ngIf="operations().length === 0" class="empty-state">
+          <div class="empty-icon"></div>
+          <h4>Aucune opération</h4>
+          <p>Vous n'avez pas encore effectué d'opération</p>
+          <button class="btn btn-primary" routerLink="/client/operations/new">
+            Créer ma première opération
+          </button>
+        </div>
+
+        <!-- Operations Table -->
+        <div *ngIf="operations().length > 0" class="table-responsive">
+          <table class="operations-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Montant</th>
+                <th>Statut</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let operation of operations()" class="table-row">
+                <td class="cell-id">#{{ operation.id }}</td>
+                <td>
+                  <span [class]="'badge ' + getTypeBadgeClass(operation.type)">
+                    {{ getTypeLabel(operation.type) }}
+                  </span>
+                </td>
+                <td class="cell-amount">
+                  {{ operation.amount | number:'1.2-2' }} DH
+                </td>
+                <td>
+                  <span [class]="'badge ' + getStatusBadgeClass(operation.status)">
+                    {{ getStatusLabel(operation.status) }}
+                  </span>
+                </td>
+                <td class="cell-date">
+                  {{ operation.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-outline" [routerLink]="['/client/operation-details', operation.id]">
+                    Détails
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

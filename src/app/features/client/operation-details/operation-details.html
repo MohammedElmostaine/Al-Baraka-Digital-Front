@@ -1,0 +1,299 @@
+<div class="details-container">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/client/dashboard">Dashboard</a>
+    <span class="separator">›</span>
+    <span class="current">Opération #{{ operation()?.id }}</span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <span class="icon">📄</span>
+        Opération #{{ operation()?.id }}
+      </h1>
+      <p class="page-subtitle">Détails complets de votre opération</p>
+    </div>
+    <button class="btn btn-outline" (click)="goBack()">
+      <span class="icon">←</span>
+      Retour
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading()" class="loading-container">
+    <div class="spinner"></div>
+    <p>Chargement...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error()" class="alert alert-error">
+    <span class="icon">⚠️</span>
+    <span>{{ error() }}</span>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading() && !error() && operation()" class="content-grid">
+    <!-- Main Column -->
+    <div class="main-column">
+      <!-- Status Card -->
+      <div class="card status-card" [ngClass]="'status-' + operation()!.status.toLowerCase()">
+        <div class="card-body">
+          <div class="status-content">
+            <div class="status-icon">{{ getStatusIcon(operation()!.status) }}</div>
+            <div class="status-info">
+              <div class="status-label">Statut</div>
+              <div class="status-value">
+                <span [class]="'badge ' + getStatusBadgeClass(operation()!.status)">
+                  {{ getStatusLabel(operation()!.status) }}
+                </span>
+              </div>
+              <div class="status-description">
+                {{ getStatusDescription(operation()!.status) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Upload Required Alert -->
+          <div *ngIf="uploadRequired() && !operation()!.hasDocument" class="alert alert-info">
+            <span class="icon">📎</span>
+            <div>
+              <strong>Document requis</strong>
+              <p>Veuillez uploader un justificatif pour cette opération</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Operation Details Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">ℹ️</span>
+            Informations
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="details-grid">
+            <div class="detail-item">
+              <label>Type d'opération</label>
+              <div class="value">
+                <span [class]="'badge ' + getTypeBadgeClass(operation()!.type)">
+                  {{ getTypeLabel(operation()!.type) }}
+                </span>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <label>Montant</label>
+              <div class="value amount">
+                {{ operation()!.amount | number:'1.2-2' }} DH
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <label>Compte source</label>
+              <div class="value">{{ operation()!.sourceAccountNumber }}</div>
+            </div>
+
+            <div *ngIf="operation()!.destinationAccountNumber" class="detail-item">
+              <label>Compte destinataire</label>
+              <div class="value">{{ operation()!.destinationAccountNumber }}</div>
+            </div>
+
+            <div class="detail-item">
+              <label>Date de création</label>
+              <div class="value">
+                {{ operation()!.createdAt | date:'dd/MM/yyyy HH:mm' }}
+              </div>
+            </div>
+
+            <div *ngIf="operation()!.executedAt" class="detail-item">
+              <label>Date d'exécution</label>
+              <div class="value">
+                {{ operation()!.executedAt | date:'dd/MM/yyyy HH:mm' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Document Card -->
+      <div *ngIf="operation()!.requiresDocument" class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">📎</span>
+            Document justificatif
+          </h3>
+        </div>
+        <div class="card-body">
+          <!-- Document Already Uploaded -->
+          <div *ngIf="operation()!.hasDocument" class="document-uploaded">
+            <div class="alert alert-success">
+              <span class="icon">✓</span>
+              <span>Document uploadé avec succès</span>
+            </div>
+            <p class="text-muted">
+              Votre document a été reçu et est en cours d'analyse.
+            </p>
+          </div>
+
+          <!-- Upload Form -->
+          <div *ngIf="!operation()!.hasDocument" class="upload-section">
+            <div class="alert alert-warning">
+              <span class="icon">⚠️</span>
+              <div>
+                <strong>Document requis</strong>
+                <p>Cette opération nécessite un justificatif pour être validée.</p>
+              </div>
+            </div>
+
+            <!-- Success Message -->
+            <div *ngIf="uploadSuccess()" class="alert alert-success">
+              <span class="icon">✓</span>
+              <span>{{ uploadSuccess() }}</span>
+            </div>
+
+            <!-- Error Message -->
+            <div *ngIf="uploadError()" class="alert alert-error">
+              <span class="icon">⚠️</span>
+              <span>{{ uploadError() }}</span>
+            </div>
+
+            <div class="upload-form">
+              <div class="file-input-wrapper">
+                <input
+                  type="file"
+                  id="document"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  (change)="onFileSelected($event)"
+                  [disabled]="uploadingDocument()"
+                />
+                <label for="document" class="file-input-label">
+                  <span class="icon">📁</span>
+                  <span *ngIf="!selectedFile()">Sélectionner un document</span>
+                  <span *ngIf="selectedFile()">{{ selectedFile()!.name }}</span>
+                </label>
+              </div>
+
+              <div class="file-help">
+                <span class="icon">ℹ️</span>
+                Formats acceptés: PDF, JPG, PNG (max 5MB)
+              </div>
+
+              <button
+                *ngIf="selectedFile()"
+                class="btn btn-primary"
+                (click)="uploadDocument()"
+                [disabled]="uploadingDocument()"
+              >
+                <span *ngIf="!uploadingDocument()">
+                  <span class="icon">⬆️</span>
+                  Uploader le document
+                </span>
+                <span *ngIf="uploadingDocument()" class="loading">
+                  <span class="spinner"></span>
+                  Upload en cours...
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <!-- Timeline Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">⏱️</span>
+            Chronologie
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="timeline">
+            <!-- Création -->
+            <div class="timeline-item">
+              <div class="timeline-marker active"></div>
+              <div class="timeline-content">
+                <div class="timeline-title">Opération créée</div>
+                <div class="timeline-date">
+                  {{ operation()!.createdAt | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Document -->
+            <div *ngIf="operation()!.requiresDocument" class="timeline-item">
+              <div class="timeline-marker" [class.active]="operation()!.hasDocument"></div>
+              <div class="timeline-content">
+                <div class="timeline-title">
+                  {{ operation()!.hasDocument ? 'Document uploadé' : 'En attente de document' }}
+                </div>
+                <div *ngIf="operation()!.hasDocument" class="timeline-date">
+                  Document reçu
+                </div>
+              </div>
+            </div>
+
+            <!-- Validation -->
+            <div class="timeline-item">
+              <div class="timeline-marker"
+                   [class.active]="operation()!.validatedAt"
+                   [class.success]="operation()!.status === OperationStatus.APPROVED"
+                   [class.error]="operation()!.status === OperationStatus.REJECTED">
+              </div>
+              <div class="timeline-content">
+                <div class="timeline-title">
+                  {{ operation()!.status === OperationStatus.APPROVED ? 'Approuvée' :
+                  operation()!.status === OperationStatus.REJECTED ? 'Rejetée' :
+                  operation()!.status === OperationStatus.COMPLETED ? 'Complétée' :
+                  'En attente de validation' }}
+                </div>
+                <div *ngIf="operation()!.validatedAt" class="timeline-date">
+                  {{ operation()!.validatedAt | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Exécution -->
+            <div *ngIf="operation()!.status === OperationStatus.APPROVED || operation()!.status === OperationStatus.COMPLETED"
+                 class="timeline-item">
+              <div class="timeline-marker active success"></div>
+              <div class="timeline-content">
+                <div class="timeline-title">Exécutée</div>
+                <div *ngIf="operation()!.executedAt" class="timeline-date">
+                  {{ operation()!.executedAt | date:'dd/MM/yyyy HH:mm' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Card -->
+      <div class="card">
+        <div class="card-header">
+          <h3 class="card-title">
+            <span class="icon">💡</span>
+            Informations
+          </h3>
+        </div>
+        <div class="card-body">
+          <div class="info-block">
+            <h4>Délai de traitement</h4>
+            <p>Les opérations sont généralement traitées sous 24h ouvrées.</p>
+          </div>
+
+          <div class="info-block">
+            <h4>Besoin d'aide?</h4>
+            <p>Contactez notre support client pour toute question.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

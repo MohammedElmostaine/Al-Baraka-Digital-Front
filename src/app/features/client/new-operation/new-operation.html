@@ -1,0 +1,178 @@
+<div class="operation-container">
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb">
+    <a routerLink="/client/dashboard">Dashboard</a>
+    <span class="separator">›</span>
+    <span class="current">Nouvelle Opération</span>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">
+      Nouvelle Opération
+    </h1>
+    <p class="page-subtitle">Créez une nouvelle opération bancaire</p>
+  </div>
+
+  <div class="content-grid">
+    <!-- Main Form -->
+    <div class="form-section">
+      <div class="card">
+        <div class="card-body">
+          <!-- Error Alert -->
+          <div *ngIf="errorMessage()" class="alert alert-error">
+            <span>{{ errorMessage() }}</span>
+          </div>
+
+          <form [formGroup]="operationForm" (ngSubmit)="onSubmit()">
+            <!-- Type d'opération -->
+            <div class="form-group">
+              <label class="form-label">Type d'opération</label>
+              <div class="type-selection">
+                <div *ngFor="let type of [OperationType.DEPOSIT, OperationType.WITHDRAWAL, OperationType.TRANSFER]"
+                  class="type-card" [class.selected]="selectedType() === type" (click)="selectOperationType(type)">
+                  <input type="radio" [value]="type" formControlName="type" [id]="type" hidden>
+                  <div class="type-icon">{{ getTypeIcon(type) }}</div>
+                  <div class="type-label">{{ getTypeLabel(type) }}</div>
+                  <div class="type-description">{{ getTypeDescription(type) }}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Montant -->
+            <div class="form-group">
+              <label for="amount" class="form-label">Montant (DH)</label>
+              <div class="input-group" [class.error]="submitted() && f['amount'].errors">
+                <span class="input-prefix"></span>
+                <input type="number" id="amount" formControlName="amount" class="form-control" placeholder="0.00"
+                  step="0.01" min="0.01" [class.invalid]="submitted() && f['amount'].errors" />
+                <span class="input-suffix">DH</span>
+              </div>
+              <span class="icon"></span>
+              Les opérations supérieures à 10 000 DH nécessitent un justificatif
+            </div>
+            <div *ngIf="submitted() && f['amount'].errors" class="error-message">
+              <span *ngIf="f['amount'].errors['required']">Le montant est requis</span>
+              <span *ngIf="f['amount'].errors['min']">Le montant doit être supérieur à 0</span>
+            </div>
+        </div>
+
+        <!-- Compte destinataire (pour virement) -->
+        <div *ngIf="selectedType() === OperationType.TRANSFER" class="form-group slide-in">
+          <label for="destinationAccountNumber" class="form-label">
+            Compte destinataire
+          </label>
+          <div class="input-group" [class.error]="submitted() && f['destinationAccountNumber'].errors">
+            <span class="input-prefix"></span>
+            <input type="text" id="destinationAccountNumber" formControlName="destinationAccountNumber"
+              class="form-control" placeholder="AB-XXXXXX"
+              [class.invalid]="submitted() && f['destinationAccountNumber'].errors" />
+          </div>
+          <div class="form-help">
+            Saisissez le numéro de compte du bénéficiaire
+          </div>
+          <div *ngIf="submitted() && f['destinationAccountNumber'].errors" class="error-message">
+            <span *ngIf="f['destinationAccountNumber'].errors['required']">
+              Le compte destinataire est requis
+            </span>
+          </div>
+        </div>
+
+        <!-- Alert document requis -->
+        <div *ngIf="showDocumentAlert()" class="alert alert-warning slide-in">
+          <div>
+            <strong>Document requis !</strong>
+            <p>Cette opération nécessitera un justificatif. Vous pourrez l'uploader après la création.</p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" [disabled]="loading()">
+            <span *ngIf="!loading()">
+              Créer l'opération
+            </span>
+            <span *ngIf="loading()" class="loading">
+              <span class="spinner"></span>
+              Création en cours...
+            </span>
+          </button>
+          <button type="button" class="btn btn-outline" routerLink="/client/dashboard" [disabled]="loading()">
+            Annuler
+          </button>
+        </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Info -->
+  <div class="info-section">
+    <!-- Informations -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          Informations
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="info-block">
+          <h4>Validation automatique</h4>
+          <p>Les opérations ≤ 10 000 DH sont validées automatiquement.</p>
+        </div>
+
+        <div class="info-block">
+          <h4>Validation manuelle</h4>
+          <p>Les opérations > 10 000 DH nécessitent :</p>
+          <ul>
+            <li>Upload d'un justificatif</li>
+            <li>Validation par un agent bancaire</li>
+          </ul>
+        </div>
+
+        <div class="info-block">
+          <h4>Documents acceptés</h4>
+          <ul>
+            <li>PDF (max 5MB)</li>
+            <li>Images JPG/PNG (max 5MB)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Guide rapide -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          Guide rapide
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="guide-item">
+          <div class="guide-icon"></div>
+          <div class="guide-content">
+            <strong>Dépôt</strong>
+            <p>Ajoutez des fonds à votre compte</p>
+          </div>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-icon"></div>
+          <div class="guide-content">
+            <strong>Retrait</strong>
+            <p>Retirez des fonds de votre compte</p>
+          </div>
+        </div>
+
+        <div class="guide-item">
+          <div class="guide-icon"></div>
+          <div class="guide-content">
+            <strong>Virement</strong>
+            <p>Transférez des fonds vers un autre compte</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

@@ -1,0 +1,87 @@
+// Import styles from login (shared styles)
+@use '../login/login.scss' as *;
+
+// Additional styles specific to register
+
+.info-box {
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+  border-left: 3px solid #0d9488;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  i {
+    font-size: 1.5rem;
+    color: #0d9488;
+
+    &.icon-shield::before {
+      content: '';
+      font-style: normal;
+    }
+  }
+
+  strong {
+    display: block;
+    color: #2c3e50;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+  }
+
+  p {
+    margin: 0;
+    color: #7f8c8d;
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+
+  i.icon-success::before {
+    content: '';
+    font-style: normal;
+  }
+}
+
+.note {
+  margin-top: 20px;
+  text-align: center;
+
+  p {
+    font-size: 0.75rem;
+    color: #adb5bd;
+    line-height: 1.5;
+    margin: 0;
+  }
+}
+
+.icon-user::before {
+  content: '';
+  font-style: normal;
+}
+
+.icon-register::before {
+  content: '';
+  font-style: normal;
+}
+
+// Override for register form spacing
+.auth-form {
+  .form-group {
+    margin-bottom: 18px; // Slightly less spacing for more fields
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 576px) {
+  .info-box {
+    flex-direction: column;
+    text-align: center;
+  }
+}

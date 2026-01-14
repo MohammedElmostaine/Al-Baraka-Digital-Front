@@ -1,0 +1,134 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <!-- Header -->
+    <div class="auth-header">
+      <div class="logo">
+        <i class="icon-bank"></i>
+      </div>
+      <h2>Al Baraka Digital</h2>
+      <p>Plateforme bancaire intelligente et sécurisée</p>
+    </div>
+
+    <!-- Alert d'erreur -->
+    <div class="alert alert-error" *ngIf="errorMessage">
+      <i class="icon-alert"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Formulaire de connexion -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">Email</label>
+        <div class="input-group" [class.error]="submitted && f['email']?.errors">
+          <span class="input-icon">
+            <i class="icon-email"></i>
+          </span>
+          <input
+            type="email"
+            id="email"
+            formControlName="email"
+            placeholder="votre.email@exemple.com"
+            [class.invalid]="submitted && f['email']?.errors"
+            autocomplete="email"
+          />
+        </div>
+        <div class="error-message" *ngIf="submitted && f['email']?.errors">
+          <span *ngIf="f['email']?.errors?.['required']">L'email est requis</span>
+          <span *ngIf="f['email']?.errors?.['email']">Email invalide</span>
+        </div>
+      </div>
+
+      <!-- Mot de passe -->
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <div class="input-group" [class.error]="submitted && f['password'].errors">
+          <span class="input-icon">
+            <i class="icon-lock"></i>
+          </span>
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            formControlName="password"
+            placeholder="••••••••"
+            [class.invalid]="submitted && f['password'].errors"
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="input-action"
+            (click)="togglePasswordVisibility()"
+            tabindex="-1"
+          >
+            <i [class]="showPassword ? 'icon-eye-off' : 'icon-eye'"></i>
+          </button>
+        </div>
+        <div class="error-message" *ngIf="submitted && f['password'].errors">
+          <span *ngIf="f['password'].errors['required']">Le mot de passe est requis</span>
+          <span *ngIf="f['password'].errors['minlength']">
+            Le mot de passe doit contenir au moins 6 caractères
+          </span>
+        </div>
+      </div>
+
+      <!-- Bouton de connexion -->
+      <button
+        type="submit"
+        class="btn btn-primary btn-block"
+        [disabled]="loading"
+      >
+        <span *ngIf="!loading">
+          <i class="icon-login"></i>
+          Se connecter
+        </span>
+        <span *ngIf="loading" class="loading">
+          <i class="spinner"></i>
+          Connexion en cours...
+        </span>
+      </button>
+
+      <!-- Lien mot de passe oublié -->
+      <div class="text-center mt-3">
+        <a href="#" class="link">Mot de passe oublié ?</a>
+      </div>
+    </form>
+
+    <!-- Séparateur -->
+    <div class="divider">
+      <span>OU</span>
+    </div>
+
+    <!-- Lien inscription -->
+    <div class="text-center">
+      <p class="text-muted">Vous n'avez pas de compte ?</p>
+      <button type="button" class="btn btn-outline" (click)="goToRegister()">
+        Créer un compte
+      </button>
+    </div>
+
+    <!-- Comptes de démonstration -->
+    <div class="demo-credentials">
+      <div class="demo-header">
+        <i class="icon-info"></i>
+        <strong>Comptes de test</strong>
+      </div>
+      <div class="credential-item" (click)="fillDemoAccount('client')">
+        <div class="credential-role">Client</div>
+        <div class="credential-info">test@client.com / test123</div>
+      </div>
+      <div class="credential-item" (click)="fillDemoAccount('agent')">
+        <div class="credential-role">Agent</div>
+        <div class="credential-info">agent@albaraka.com / agent123</div>
+      </div>
+      <div class="credential-item" (click)="fillDemoAccount('admin')">
+        <div class="credential-role">Admin</div>
+        <div class="credential-info">admin@albaraka.com / admin123</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="auth-footer">
+    <small>© 2026 Al Baraka Digital - Version 3.0 Angular</small>
+  </div>
+</div>
